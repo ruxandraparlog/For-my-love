@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celeste Adventure for Fonzy 🍓💜</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d061a;
+            --panel-bg: #1c0d38;
+            --accent-purple: #9d4edd;
+            --light-purple: #c77dff;
+            --pale-pink: #f72585;
+            --text-color: #e0aaff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'VT323', monospace;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Scanline Overlay */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(13, 6, 26, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px 10px 10px;
+            z-index: 2;
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(1rem, 2.5vw, 1.8rem);
+            color: var(--light-purple);
+            text-shadow: 3px 3px var(--pale-pink), 5px 5px #3c096c;
+            margin-bottom: 10px;
+        }
+
+        .audio-btn {
+            background-color: var(--accent-purple);
+            color: #fff;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.65rem;
+            padding: 10px 16px;
+            border: 3px solid #fff;
+            box-shadow: 3px 3px 0px #000;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .audio-btn:hover {
+            background-color: var(--light-purple);
+        }
+
+        main {
+            width: 95%;
+            max-width: 800px;
+            margin: 15px auto 40px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            align-items: center;
+        }
+
+        /* Canvas Game Container */
+        .game-card {
+            background-color: var(--panel-bg);
+            border: 4px solid #fff;
+            box-shadow: 6px 6px 0px #000;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+        }
+
+        canvas {
+            background: #15082e;
+            border: 3px solid var(--accent-purple);
+            display: block;
+            margin: 10px auto;
+            max-width: 100%;
+            image-rendering: pixelated;
+        }
+
+        .controls-info {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-top: 8px;
+        }
+
+        .touch-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .t-btn {
+            background: #3c096c;
+            color: #fff;
+            border: 2px solid #fff;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.7rem;
+            padding: 12px 18px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .t-btn:active {
+            background: var(--pale-pink);
+        }
+
+        /* Reasons Box */
+        .dialogue-box {
+            background-color: var(--panel-bg);
+            border: 4px solid #fff;
+            box-shadow: 6px 6px 0px #000;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .dialogue-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.75rem;
+            color: var(--pale-pink);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dialogue-text {
+            font-size: 1.5rem;
+            line-height: 1.5;
+            min-height: 70px;
+            color: #fff;
+        }
+
+        .gallery-box {
+            background-color: var(--panel-bg);
+            border: 4px solid #fff;
+            box-shadow: 6px 6px 0px #000;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .gallery-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8rem;
+            color: var(--light-purple);
+            margin-bottom: 15px;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .photo-card {
+            background: #120826;
+            border: 2px solid var(--pale-pink);
+            padding: 6px;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border: 1px solid #fff;
+        }
+
+        .upload-btn-label {
+            display: inline-block;
+            background: #560bad;
+            color: #fff;
+            border: 2px solid #fff;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.6rem;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* Floating Hearts */
+        .floating-heart {
+            position: fixed;
+            font-size: 22px;
+            user-select: none;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 9999;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.4); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>FOR FONZY 💜</h1>
+        <div style="font-size: 1.5rem;">Celeste Mountain Adventure</div>
+        <button class="audio-btn" id="musicBtn">🎵 Toggle Music</button>
+    </header>
+
+    <main>
+        <!-- Mini Game Canvas -->
+        <section class="game-card">
+            <canvas id="gameCanvas" width="600" height="320"></canvas>
+            <div class="controls-info">
+                <strong>Controls:</strong> Arrow Keys / A & D (Move) | Space / W (Jump) | Shift / K (Dash)
+            </div>
+            <div class="touch-controls">
+                <button class="t-btn" id="btnLeft">◀ Left</button>
+                <button class="t-btn" id="btnRight">Right ▶</button>
+                <button class="t-btn" id="btnJump">⬆ Jump</button>
+                <button class="t-btn" id="btnDash">⚡ Dash</button>
+            </div>
+        </section>
+
+        <!-- Reasons Dialogue -->
+        <section class="dialogue-box">
+            <div class="dialogue-title">
+                <span>REASONS WHY I LOVE YOU</span>
+                <span id="reasonIndex">1/10</span>
+            </div>
+            <div class="dialogue-text" id="reasonText">Loading reasons...</div>
+            <div style="text-align: right; margin-top: 10px;">
+                <button class="audio-btn" id="prevBtn">◀ Prev</button>
+                <button class="audio-btn" id="nextBtn">Next ▶</button>
+            </div>
+        </section>
+
+        <!-- Memory Photo Unlocks -->
+        <section class="gallery-box">
+            <div class="gallery-title">UNLOCKED MEMORIES 💖</div>
+            <div class="photo-grid" id="photoGrid"></div>
+            <label class="upload-btn-label" for="fileInput">📂 Add Our Photos</label>
+            <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+        </section>
+    </main>
+
+    <script>
+        // Floating Heart on Click
+        document.addEventListener('click', (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart';
+            heart.innerText = ['💜', '💖', '🍓', '✨'][Math.floor(Math.random()*4)];
+            heart.style.left = e.clientX + 'px';
+            heart.style.top = e.clientY + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 800);
+        });
+
+        // Fixed Sound System
+        let audioCtx = null;
+        let isMusicPlaying = false;
+        let synthInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Global listeners to resume audio context on any user gesture
+        window.addEventListener('click', initAudio, { once: true });
+        window.addEventListener('keydown', initAudio, { once: true });
+        window.addEventListener('touchstart', initAudio, { once: true });
+
+        function playSfx(freq, type='square', duration=0.1) {
+            initAudio();
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        const melody = [261, 293, 329, 392, 440, 523, 392, 329];
+        let noteI = 0;
+        document.getElementById('musicBtn').onclick = () => {
+            initAudio();
+            isMusicPlaying = !isMusicPlaying;
+            if (isMusicPlaying) {
+                synthInterval = setInterval(() => {
+                    playSfx(melody[noteI], 'sine', 0.4);
+                    noteI = (noteI + 1) % melody.length;
+                }, 350);
+            } else {
+                clearInterval(synthInterval);
+            }
+        };
+
+        // Reasons Dialogue System
+        const reasons = [
+            "1. You make my world feel bright and warm every single day. 💜",
+            "2. Your kindness and sweet smile are my favorite things.",
+            "3. I love how smart, caring, and genuine you are.",
+            "4. Being with you always feels like a happy adventure.",
+            "5. Your voice is my favorite comfort sound.",
+            "6. You support me and hold my hand through everything.",
+            "7. Every small memory with you means the absolute world to me.",
+            "8. You have the softest, most loving heart, Fonzy.",
+            "9. I am so lucky and grateful to have you in my life.",
+            "10. I love you endlessly, simple as that! 🍓✨"
+        ];
+        let rIndex = 0;
+        const reasonText = document.getElementById('reasonText');
+        const reasonIdx = document.getElementById('reasonIndex');
+
+        function showReason() {
+            reasonIdx.innerText = `${rIndex + 1}/${reasons.length}`;
+            reasonText.innerText = reasons[rIndex];
+        }
+        document.getElementById('nextBtn').onclick = () => { rIndex = (rIndex + 1) % reasons.length; showReason(); playSfx(500); };
+        document.getElementById('prevBtn').onclick = () => { rIndex = (rIndex - 1 + reasons.length) % reasons.length; showReason(); playSfx(400); };
+        showReason();
+
+        // Game Engine (Celeste Mini-Platformer)
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        // Touch/Mobile controls
+        const setupMobile = (id, key) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); initAudio(); keys[key] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+            btn.addEventListener('mousedown', () => { initAudio(); keys[key] = true; });
+            btn.addEventListener('mouseup', () => keys[key] = false);
+        };
+        setupMobile('btnLeft', 'ArrowLeft');
+        setupMobile('btnRight', 'ArrowRight');
+        setupMobile('btnJump', 'Space');
+        setupMobile('btnDash', 'ShiftLeft');
+
+        const player = {
+            x: 30, y: 220,
+            w: 16, h: 22,
+            vx: 0, vy: 0,
+            grounded: false,
+            canDash: true,
+            isDashing: false,
+            dashTimer: 0,
+            hairColor: '#f72585'
+        };
+
+        const platforms = [
+            {x: 0, y: 280, w: 180, h: 40},
+            {x: 220, y: 240, w: 120, h: 20},
+            {x: 380, y: 190, w: 100, h: 20},
+            {x: 180, y: 140, w: 110, h: 20},
+            {x: 40, y: 90, w: 100, h: 20},
+            {x: 480, y: 100, w: 120, h: 220}
+        ];
+
+        const collectibles = [
+            {x: 260, y: 200, collected: false, type: '🍓'},
+            {x: 220, y: 100, collected: false, type: '🍓'},
+            {x: 80, y: 50, collected: false, type: '💜'},
+            {x: 530, y: 60, collected: false, type: '💖'}
+        ];
+
+        function update() {
+            // Movement
+            if (keys['ArrowLeft'] || keys['KeyA']) player.vx = -3;
+            else if (keys['ArrowRight'] || keys['KeyD']) player.vx = 3;
+            else player.vx *= 0.7;
+
+            // Jump
+            if ((keys['Space'] || keys['KeyW'] || keys['ArrowUp']) && player.grounded) {
+                player.vy = -7.5;
+                player.grounded = false;
+                playSfx(350);
+            }
+
+            // Dash Mechanic
+            if ((keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyK']) && player.canDash && !player.isDashing) {
+                player.isDashing = true;
+                player.canDash = false;
+                player.dashTimer = 10;
+                player.vy = -3;
+                player.vx = player.vx >= 0 ? 8 : -8;
+                player.hairColor = '#4cc9f0'; // Celeste blue dash color
+                playSfx(700, 'sawtooth');
+            }
+
+            if (player.isDashing) {
+                player.dashTimer--;
+                if(player.dashTimer <= 0) player.isDashing = false;
+            } else {
+                player.vy += 0.4; // Gravity
+            }
+
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // Platform collisions
+            player.grounded = false;
+            for (let p of platforms) {
+                if (player.x < p.x + p.w && player.x + player.w > p.x &&
+                    player.y < p.y + p.h && player.y + player.h > p.y) {
+                    if (player.vy > 0 && player.y + player.h - player.vy <= p.y + 10) {
+                        player.y = p.y - player.h;
+                        player.vy = 0;
+                        player.grounded = true;
+                        player.canDash = true;
+                        player.hairColor = '#f72585';
+                    }
+                }
+            }
+
+            // Canvas boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+            if (player.y > canvas.height) {
+                player.x = 30;
+                player.y = 220;
+                player.vy = 0;
+            }
+
+            // Collectibles
+            for (let c of collectibles) {
+                if (!c.collected && Math.abs(player.x - c.x) < 20 && Math.abs(player.y - c.y) < 20) {
+                    c.collected = true;
+                    playSfx(880, 'sine', 0.2);
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Mountain Platforms
+            ctx.fillStyle = '#3c096c';
+            for (let p of platforms) {
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.fillStyle = '#7209b7';
+                ctx.fillRect(p.x, p.y, p.w, 4); // Top highlight
+                ctx.fillStyle = '#3c096c';
+            }
+
+            // Draw Collectibles
+            ctx.font = '16px serif';
+            for (let c of collectibles) {
+                if (!c.collected) {
+                    ctx.fillText(c.type, c.x, c.y);
+                }
+            }
+
+            // Draw Player (Madeline Pixel Style)
+            ctx.fillStyle = player.hairColor; // Hair
+            ctx.fillRect(player.x - 2, player.y - 2, player.w + 4, 8);
+            ctx.fillStyle = '#ffb703'; // Body jacket
+            ctx.fillRect(player.x, player.y + 6, player.w, player.h - 6);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+
+        // File Upload Gallery System
+        const fileInput = document.getElementById('fileInput');
+        const photoGrid = document.getElementById('photoGrid');
+
+        fileInput.onchange = (e) => {
+            for(let file of e.target.files) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const card = document.createElement('div');
+                    card.className = 'photo-card';
+                    card.innerHTML = `<img src="${event.target.result}"><div style="color:#fff; margin-top:5px;">Fonzy & Me 💜</div>`;
+                    photoGrid.appendChild(card);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    </script>
+</body>
+</html>
